@@ -1,0 +1,58 @@
+<!-- staff-dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Staff Dashboard – FancyShop</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0fff0;
+      text-align: center;
+      padding-top: 50px;
+    }
+    nav a {
+      display: inline-block;
+      margin: 15px;
+      padding: 10px 20px;
+      background: #28a745;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <script>
+    const isLoggedIn = localStorage.getItem("loggedIn") === "true";
+    const role = localStorage.getItem("role");
+
+    if (!isLoggedIn || role !== "staff") {
+      window.location.href = "login.html";
+    }
+  </script>
+
+  <h1>Welcome, Staff</h1>
+  <p>You are logged in as: <strong><span id="username"></span></strong></p>
+
+  <nav>
+    <a href="purchase-billing.html">🧾 Billing</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </nav>
+
+  
+<script>
+  function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+  }
+
+
+  
+   
+  </script>
+
+</body>
+</html>

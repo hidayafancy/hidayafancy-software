@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FancyShop – Print Bill</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #eef;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    nav {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    nav a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: white;
+      background: #007bff;
+      padding: 8px 16px;
+      border-radius: 4px;
+    }
+    .bill-box {
+      background: white;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    h2, p {
+      margin: 0;
+      padding: 5px 0;
+      text-align: center;
+    }
+    .meta {
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    .total {
+      font-weight: bold;
+      text-align: right;
+      margin-top: 10px;
+    }
+    button {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      background: green;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: darkgreen;
+    }
+  </style>
+</head>
+<body>
+
+  
+
+ 
+
+  <div class="bill-box" id="billContent">
+    <h2>🛍️ FancyShop</h2>
+    <p><strong>📍 Edappal – Seithalikutty Complex, Ponnani Road</strong></p>
+    <p><strong>📞 Phone: 9876543210</strong></p>
+    <div class="meta">
+      <span id="datetime"></span>
+    </div>
+
+    <table id="billTable">
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Name</th>
+          <th>Qty</th>
+          <th>Price</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="total" id="billTotal">Total: ₹0</div>
+  </div>
+
+  <button onclick="printBill()">Print Bill</button>
+
+  <script>
+    const tableBody = document.querySelector("#billTable tbody");
+    const billTotal = document.getElementById("billTotal");
+    const datetime = document.getElementById("datetime");
+
+    // Get date, time, day
+    const now = new Date();
+    const dateStr = now.toLocaleDateString();
+    const timeStr = now.toLocaleTimeString();
+    const dayStr = now.toLocaleDateString(undefined, { weekday: "long" });
+    datetime.innerText = `🗓️ ${dateStr} (${dayStr}) ⏰ ${timeStr}`;
+
+    let currentBill = JSON.parse(localStorage.getItem("currentBill") || "[]");
+
+    function updateBillTable() {
+      let total = 0;
+      tableBody.innerHTML = "";
+
+      currentBill.forEach((item, index) => {
+        const itemTotal = item.qty * item.price;
+        total += itemTotal;
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${item.name}</td>
+          <td>${item.qty}</td>
+          <td>₹${item.price}</td>
+          <td>₹${itemTotal}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      billTotal.textContent = `Total: ₹${total}`;
+    }
+
+    function printBill() {
+      if (currentBill.length === 0) {
+        alert("No items in the bill.");
+        return;
+      }
+
+      const billId = Date.now();
+      const billDateTime = `${dateStr} ${timeStr}`;
+
+      let totalAmount = 0;
+      const items = currentBill.map(item => {
+        const itemTotal = item.qty * item.price;
+        totalAmount += itemTotal;
+        return {
+          name: item.name,
+          qty: item.qty,
+          price: item.price,
+          total: itemTotal
+        };
+      });
+
+      const newBill = {
+        id: billId,
+        date: billDateTime,
+        items: items,
+        total: totalAmount
+      };
+
+      const billHistory = JSON.parse(localStorage.getItem("billHistory") || "[]");
+      billHistory.push(newBill);
+      localStorage.setItem("billHistory", JSON.stringify(billHistory));
+      localStorage.removeItem("currentBill");
+
+      const askPrint = confirm("🖨️ Bill saved. Do you want to print it?");
+      if (askPrint) {
+        window.print();
+      }
+
+      window.location.href = "billHistory.html";
+    }
+
+    updateBillTable();
+    
+  </script>
+
+</body>
+</html>

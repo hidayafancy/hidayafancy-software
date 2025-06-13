@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FancyShop – Sales Reports</title>
+  <style>
+    body {
+      font-family: Arial; padding: 20px; background: #eef;
+      max-width: 900px; margin: auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    nav {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    nav a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: white;
+      background: #007bff;
+      padding: 8px 16px;
+      border-radius: 4px;
+    }
+    .report-section {
+      margin-bottom: 30px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background: #007bff;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<h1>FancyShop – Sales Reports</h1>
+<nav>
+  <a href="index.html">🏠 Home</a>
+  <a href="products.html">📦 Products</a>
+  <a href="purchase-billing.html">🧾 Billing</a>
+  <a href="billHistory.html">📁 Bill History</a>
+  <a href="settings.html">⚙️ Settings</a>
+</nav>
+
+<div class="report-section" id="dailyReport">
+  <h2>Daily Sales</h2>
+  <table>
+    <thead>
+      <tr><th>Date</th><th>Total Sales (₹)</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="report-section" id="weeklyReport">
+  <h2>Weekly Sales</h2>
+  <table>
+    <thead>
+      <tr><th>Week (Year-Week)</th><th>Total Sales (₹)</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="report-section" id="monthlyReport">
+  <h2>Monthly Sales</h2>
+  <table>
+    <thead>
+      <tr><th>Month (YYYY-MM)</th><th>Total Sales (₹)</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+  const billHistory = JSON.parse(localStorage.getItem("billHistory") || "[]");
+
+  function formatDate(date) {
+    return date.toISOString().split('T')[0]; // yyyy-mm-dd
+  }
+
+  function getWeekNumber(date) {
+    // Returns ISO week number
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+    return `${d.getUTCFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
+  }
+
+  function groupByDate(bills) {
+    const daily = {};
+    bills.forEach(bill => {
+      const d = new Date(bill.date);
+      const dateStr = formatDate(d);
+      daily[dateStr] = (daily[dateStr] || 0) + bill.total;
+    });
+    return daily;
+  }
+
+  function groupByWeek(bills) {
+    const weekly = {};
+    bills.forEach(bill => {
+      const d = new Date(bill.date);
+      const weekStr = getWeekNumber(d);
+      weekly[weekStr] = (weekly[weekStr] || 0) + bill.total;
+    });
+    return weekly;
+  }
+
+  function groupByMonth(bills) {
+    const monthly = {};
+    bills.forEach(bill => {
+      const d = new Date(bill.date);
+      const monthStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2, '0')}`;
+      monthly[monthStr] = (monthly[monthStr] || 0) + bill.total;
+    });
+    return monthly;
+  }
+
+  function fillTable(tbody, data) {
+  tbody.innerHTML = "";
+  const keys = Object.keys(data).sort((a, b) => b.localeCompare(a)); // descending order
+  if (keys.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="2">No data available</td>`;
+    tbody.appendChild(tr);
+    return;
+  }
+  keys.forEach(key => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${key}</td><td>₹${data[key].toFixed(2)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+function fillTable(tbody, data) {
+  tbody.innerHTML = "";
+  const keys = Object.keys(data).sort((a, b) => b.localeCompare(a));
+  if (keys.length === 0) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="2">No data available</td>`;
+    tbody.appendChild(tr);
+    return;
+  }
+  let totalSales = 0;
+  keys.forEach(key => {
+    totalSales += data[key];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${key}</td><td>₹${data[key].toFixed(2)}</td>`;
+    tbody.appendChild(tr);
+  });
+  // Add total row
+  const totalRow = document.createElement('tr');
+  totalRow.style.fontWeight = 'bold';
+  totalRow.innerHTML = `<td>Total</td><td>₹${totalSales.toFixed(2)}</td>`;
+  tbody.appendChild(totalRow);
+}
+
+
+</script>
+
+</body>
+</html>

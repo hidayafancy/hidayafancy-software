@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FancyShop – Billing</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #eef;
+    }
+    nav {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    nav a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: white;
+      background: #007bff;
+      padding: 8px 16px;
+      border-radius: 4px;
+    }
+    #billTable {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    #billTable, #billTable th, #billTable td {
+      border: 1px solid #aaa;
+    }
+    #billTable th, #billTable td {
+      padding: 10px;
+      text-align: center;
+    }
+    .total {
+      font-weight: bold;
+      font-size: 18px;
+      text-align: right;
+      margin-top: 10px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 8px 0;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .center-btn {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .center-btn button {
+      background: #28a745;
+      color: white;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+      padding: 12px 24px;
+      border-radius: 5px;
+    }
+    .center-btn button:hover {
+      background: #218838;
+    }
+  </style>
+</head>
+<body>
+
+<h1 style="text-align:center;">FancyShop – Billing</h1>
+
+<nav>
+  <a href="index.html">🏠 Home</a>
+  <a href="products.html">📦 Products</a>
+  <a href="reports.html">📊 Reports</a>
+  <a href="settings.html">⚙️ Settings</a>
+  <a href="billHistory.html">📁 Bill History</a>
+</nav>
+
+<form id="billingForm">
+  <input type="text" id="barcodeInput" placeholder="Scan Barcode" required autocomplete="off" />
+  <input type="text" id="nameInput" placeholder="Product Name" disabled />
+  <input type="number" id="priceInput" placeholder="Price" disabled />
+  <input type="number" id="qtyInput" placeholder="Quantity" min="1" value="1" required />
+  <button type="submit">Add to Bill</button>
+</form>
+
+<table id="billTable">
+  <thead>
+    <tr><th>No.</th><th>Name</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+  </thead>
+  <tbody id="billTableBody"></tbody>
+</table>
+
+<div class="total" id="totalDisplay">Total: ₹0</div>
+
+<div class="center-btn">
+  <button id="printBtn">📨 Finish</button>
+</div>
+
+<script>
+  const products = JSON.parse(localStorage.getItem("products") || "{}");
+  let currentBillItems = [];
+  let total = 0;
+
+  const form = document.getElementById('billingForm');
+  const barcodeInput = document.getElementById('barcodeInput');
+  const nameInput = document.getElementById('nameInput');
+  const priceInput = document.getElementById('priceInput');
+  const qtyInput = document.getElementById('qtyInput');
+  const billTableBody = document.getElementById('billTableBody');
+  const totalDisplay = document.getElementById('totalDisplay');
+  const printBtn = document.getElementById('printBtn');
+
+  barcodeInput.addEventListener('input', () => {
+    const barcode = barcodeInput.value.trim();
+    const product = products[barcode];
+    if (product) {
+      nameInput.value = product.name;
+      priceInput.value = product.price;
+      qtyInput.value = 1;
+      qtyInput.disabled = false;
+    } else {
+      nameInput.value = '';
+      priceInput.value = '';
+      qtyInput.value = '';
+      qtyInput.disabled = true;
+    }
+  });
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const barcode = barcodeInput.value.trim();
+    const qty = parseInt(qtyInput.value);
+
+    if (!products[barcode]) {
+      alert('Product not found!');
+      return;
+    }
+
+    if (products[barcode].stock < qty) {
+      alert('Not enough stock!');
+      return;
+    }
+
+    const product = products[barcode];
+    const name = product.name;
+    const price = product.price;
+    const itemTotal = price * qty;
+
+    // Update stock
+    products[barcode].stock -= qty;
+    localStorage.setItem('products', JSON.stringify(products));
+
+    // Add to bill
+    currentBillItems.push({ name, qty, price, total: itemTotal });
+    total += itemTotal;
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${currentBillItems.length}</td>
+      <td>${name}</td>
+      <td>${qty}</td>
+      <td>₹${price}</td>
+      <td>₹${itemTotal}</td>
+    `;
+    billTableBody.appendChild(row);
+    totalDisplay.textContent = `Total: ₹${total}`;
+
+    form.reset();
+    nameInput.value = '';
+    priceInput.value = '';
+    qtyInput.disabled = true;
+    barcodeInput.focus();
+  });
+
+  printBtn.addEventListener('click', () => {
+    if (currentBillItems.length === 0) {
+      alert('No items in the bill to print!');
+      return;
+    }
+
+    const now = new Date();
+    const date = now.toLocaleDateString();
+    const time = now.toLocaleTimeString();
+    const day = now.toLocaleString('en-IN', { weekday: 'long' });
+    const id = Date.now();
+
+    const newBill = {
+      id,
+      date: `${date} ${time} (${day})`,
+      shop: {
+        name: "FancyShop",
+        phone: "9876543210",
+        place: "Seithalikutty Complex, Ponnani Road, Edappal"
+      },
+      items: currentBillItems,
+      total
+    };
+
+    const billHistory = JSON.parse(localStorage.getItem("billHistory") || "[]");
+    billHistory.push(newBill);
+    localStorage.setItem("billHistory", JSON.stringify(billHistory));
+
+    localStorage.setItem('currentBill', JSON.stringify(currentBillItems));
+    localStorage.setItem('currentTotal', total.toString());
+    localStorage.setItem('currentBillDate', newBill.date);
+    localStorage.setItem('currentShopInfo', JSON.stringify(newBill.shop));
+
+    // Open bill print view
+    window.open('printbill.html', '_blank');
+
+    // Clear UI
+    currentBillItems = [];
+    total = 0;
+    billTableBody.innerHTML = '';
+    totalDisplay.textContent = 'Total: ₹0';
+  });
+
+  
+</script>
+
+</body>
+</html>

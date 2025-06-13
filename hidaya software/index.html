@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FancyShop – Home</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f8ff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      background-color: #007acc;
+      color: white;
+      padding: 20px 0;
+      width: 100%;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2em;
+    }
+
+    nav {
+      margin: 30px 0;
+    }
+
+    nav a {
+      text-decoration: none;
+      background-color: #007acc;
+      color: white;
+      padding: 12px 25px;
+      margin: 10px;
+      border-radius: 8px;
+      font-size: 16px;
+      display: inline-block;
+      transition: background 0.3s;
+    }
+
+    nav a:hover {
+      background-color: #005fa3;
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 15px;
+      background-color: #e0e0e0;
+      width: 100%;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#007bff" />
+
+  <header>
+    <h1>Welcome to FancyShop</h1>
+    <p>Your Smart Billing & Inventory Software</p>
+  </header>
+
+  <nav>
+    <a href="products.html">🛒 Products</a>
+    <a href="purchase-billing.html">🧾 Billing</a>
+    <a href="reports.html">📊 Reports</a>
+    <a href="settings.html">⚙️ Settings</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </nav>
+  
+  <script>
+    function logout() {
+      localStorage.removeItem("loggedIn");
+      window.location.href = "login.html";
+    }
+  
+  
+    if (localStorage.getItem("loggedIn") !== "true") {
+      window.location.href = "login.html";
+    }
+
+    
+  const isLoggedIn = localStorage.getItem("loggedIn") === "true";
+  const role = localStorage.getItem("role");
+
+  if (!isLoggedIn || role !== "admin") {
+    window.location.href = "login.html";
+  }
+// Verify token (GET /api/auth/verify)
+router.get('/auth/verify', authenticateToken, (req, res) => {
+  res.json({ role: req.user.role });
+});
+
+// Logout (POST /api/auth/logout)
+router.post('/auth/logout', authenticateToken, (req, res) => {
+  // Implement token invalidation logic
+  res.json({ message: 'Logged out successfully' });
+});
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token) return res.sendStatus(401);
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+}
+
+
+  </script>
+
+  <footer>
+    &copy; 2025 FancyShop Software. All rights reserved.
+  </footer>
+
+   
+  
+</body>
+</html>

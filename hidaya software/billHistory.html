@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FancyShop – Bill History</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f7f7f7;
+      padding: 20px;
+    }
+    nav {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    nav a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: white;
+      background: #007bff;
+      padding: 8px 16px;
+      border-radius: 4px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .bill {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    .bill h3 {
+      margin-top: 0;
+    }
+    table {
+      width: 100%;
+      margin-top: 10px;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    .total {
+      font-weight: bold;
+      text-align: right;
+      margin-top: 10px;
+    }
+    .btn-delete {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .btn-delete:hover {
+      background-color: #a71d2a;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🧾 FancyShop – Bill History</h1>
+
+<nav>
+  <a href="index.html">🏠 Home</a>
+  <a href="products.html">📦 Products</a>
+  <a href="reports.html">📊 Reports</a>
+  <a href="settings.html">⚙️ Settings</a>
+  <a href="purchase-billing.html">🧾 New Purchase</a>
+</nav>
+
+
+<div id="historyContainer"></div>
+
+<script>
+  const historyContainer = document.getElementById("historyContainer");
+  let billHistory = JSON.parse(localStorage.getItem("billHistory") || "[]");
+
+  // Prompt for admin password to allow deletion
+  const adminPassword = "admin123"; // Change your password here
+  const inputPassword = prompt("Enter admin password to enable Delete buttons (leave blank for read-only):");
+  const isAdmin = (inputPassword === adminPassword);
+
+  function renderBills() {
+    historyContainer.innerHTML = "";
+    if (billHistory.length === 0) {
+      historyContainer.innerHTML = "<p>No bill history found.</p>";
+      return;
+    }
+
+    // Show newest first
+    billHistory.slice().reverse().forEach(bill => {
+      const billDiv = document.createElement("div");
+      billDiv.className = "bill";
+
+      let itemsHTML = "";
+      bill.items.forEach((item, idx) => {
+        itemsHTML += `<tr>
+          <td>${idx + 1}</td>
+          <td>${item.name}</td>
+          <td>${item.qty}</td>
+          <td>₹${item.price}</td>
+          <td>₹${item.total}</td>
+        </tr>`;
+      });
+
+      billDiv.innerHTML = `
+        <h3>🧾 Bill #${bill.id}</h3>
+        <p><strong>Date:</strong> ${bill.date}</p>
+        <table>
+          <thead>
+            <tr><th>No.</th><th>Name</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+          </thead>
+          <tbody>${itemsHTML}</tbody>
+        </table>
+        <div class="total">Total: ₹${bill.total}</div>
+      `;
+
+      if (isAdmin) {
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Delete";
+        deleteBtn.className = "btn-delete";
+        deleteBtn.onclick = () => {
+          if (confirm(`Are you sure you want to delete bill #${bill.id}?`)) {
+            // Remove bill from array
+            billHistory = billHistory.filter(b => b.id !== bill.id);
+            localStorage.setItem("billHistory", JSON.stringify(billHistory));
+            renderBills();
+          }
+        };
+        billDiv.appendChild(deleteBtn);
+      }
+
+      historyContainer.appendChild(billDiv);
+    });
+  }
+
+  renderBills();
+  
+</script>
+
+</body>
+</html>

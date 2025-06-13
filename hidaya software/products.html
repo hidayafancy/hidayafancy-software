@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FancyShop – Products</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+    nav a {
+      margin-right: 10px;
+      text-decoration: none;
+      color: white;
+      background: #007bff;
+      padding: 8px 16px;
+      border-radius: 4px;
+    }
+    form, table {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 5px #ccc;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+    th, td { border: 1px solid #aaa; padding: 10px; text-align: center; }
+    td.actions button {
+      margin: 0 5px;
+      padding: 5px 10px;
+      width: auto;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    td.actions button.edit {
+      background-color: #ffc107;
+      border: none;
+      color: #000;
+    }
+    td.actions button.delete {
+      background-color: #dc3545;
+      border: none;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<h1 style="text-align:center;">FancyShop – Add / Edit Products</h1>
+<nav style="text-align:center;">
+  <a href="index.html">🏠 Home</a>
+  <a href="purchase-billing.html">💵 Billing</a>
+  <a href="reports.html">📊 Reports</a>
+  <a href="settings.html">⚙️ Settings</a>
+</nav>
+
+<form id="productForm">
+  <input type="text" id="barcode" placeholder="Barcode" required />
+  <input type="text" id="name" placeholder="Product Name" required />
+  <input type="number" step="0.01" id="price" placeholder="Price" required min="0" />
+  <input type="number" id="stock" placeholder="Stock" required min="0" />
+  <button type="submit">➕ Add Product</button>
+</form>
+
+<table>
+  <thead>
+    <tr>
+      <th>Barcode</th>
+      <th>Name</th>
+      <th>Price</th>
+      <th>Stock</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="productList"></tbody>
+</table>
+
+<script>
+  const form = document.getElementById("productForm");
+  const list = document.getElementById("productList");
+
+  let products = JSON.parse(localStorage.getItem("products") || "{}");
+
+  // To track if we are editing a product
+  let editingBarcode = null;
+
+  renderProducts();
+
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+
+    const barcodeInput = document.getElementById("barcode");
+    const nameInput = document.getElementById("name");
+    const priceInput = document.getElementById("price");
+    const stockInput = document.getElementById("stock");
+
+    const barcode = barcodeInput.value.trim();
+    const name = nameInput.value.trim();
+    const price = parseFloat(priceInput.value);
+    const stock = parseInt(stockInput.value);
+
+    if (!barcode || !name || price < 0 || stock < 0) {
+      alert("Please fill all fields correctly.");
+      return;
+    }
+
+    if (editingBarcode && editingBarcode !== barcode) {
+      // If barcode changed during edit, remove old one
+      delete products[editingBarcode];
+    }
+
+    products[barcode] = { name, price, stock };
+    localStorage.setItem("products", JSON.stringify(products));
+
+    editingBarcode = null;
+    form.reset();
+    form.querySelector("button").textContent = "➕ Add Product";
+    barcodeInput.disabled = false;
+
+    renderProducts();
+  });
+
+  function renderProducts() {
+    list.innerHTML = "";
+    Object.entries(products).forEach(([barcode, product]) => {
+      const lowStock = product.stock < 5 ? `<span style="color:red;">⚠️ Low</span>` : "";
+      const priceFormatted = product.price.toFixed(2);
+
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td>${barcode}</td>
+        <td>${product.name}</td>
+        <td>₹${priceFormatted}</td>
+        <td>${product.stock} ${lowStock}</td>
+        <td class="actions">
+          <button class="edit" data-barcode="${barcode}">✏️ Edit</button>
+          <button class="delete" data-barcode="${barcode}">🗑️ Delete</button>
+        </td>
+      `;
+
+      list.appendChild(row);
+    });
+
+    // Attach event listeners to new buttons
+    document.querySelectorAll("button.edit").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const barcode = btn.getAttribute("data-barcode");
+        startEditProduct(barcode);
+      });
+    });
+
+    document.querySelectorAll("button.delete").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const barcode = btn.getAttribute("data-barcode");
+        deleteProduct(barcode);
+      });
+    });
+  }
+
+  function startEditProduct(barcode) {
+    const product = products[barcode];
+    if (!product) return;
+
+    editingBarcode = barcode;
+
+    document.getElementById("barcode").value = barcode;
+    document.getElementById("barcode").disabled = true; // prevent editing barcode
+    document.getElementById("name").value = product.name;
+    document.getElementById("price").value = product.price;
+    document.getElementById("stock").value = product.stock;
+
+    form.querySelector("button").textContent = "💾 Save Changes";
+  }
+
+  function deleteProduct(barcode) {
+    if (confirm(`Are you sure you want to delete product with barcode "${barcode}"?`)) {
+      delete products[barcode];
+      localStorage.setItem("products", JSON.stringify(products));
+
+      // If currently editing this product, reset form
+      if (editingBarcode === barcode) {
+        editingBarcode = null;
+        form.reset();
+        document.getElementById("barcode").disabled = false;
+        form.querySelector("button").textContent = "➕ Add Product";
+      }
+
+      renderProducts();
+    }
+  }
+
+  
+</script>
+
+</body>
+</html>
